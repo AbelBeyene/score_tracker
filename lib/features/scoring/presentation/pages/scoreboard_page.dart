@@ -8,6 +8,7 @@ import 'package:score_tracker/features/scoring/presentation/widgets/serve_switch
 import 'package:score_tracker/features/scoring/presentation/widgets/rule_chips.dart';
 import 'package:score_tracker/core/models/match_config.dart';
 import 'package:score_tracker/features/scoring/data/saved_games_repository.dart';
+import 'package:score_tracker/features/scoring/application/score_api.dart';
 
 class ScoreboardPage extends StatefulWidget {
   final Player? playerOne;
@@ -42,6 +43,15 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
         config: widget.config ?? const MatchConfig(),
       );
     }
+    // Attach controller to global ScoreApi for external widgets to use
+    ScoreApi.attach(controller);
+  }
+
+  @override
+  void dispose() {
+    // Detach when page is disposed to avoid stale references
+    ScoreApi.detach(controller);
+    super.dispose();
   }
 
   @override

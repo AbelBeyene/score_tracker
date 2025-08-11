@@ -11,6 +11,7 @@ class ScoringController extends ChangeNotifier {
   final ScoreState state = ScoreState();
   final List<ScoreState> _history = <ScoreState>[];
   final List<ScoreState> _redo = <ScoreState>[];
+  int? _tiebreakFirstServerIndex;
 
   ScoringController({
     required this.playerOne,
@@ -198,6 +199,7 @@ class ScoringController extends ChangeNotifier {
     if (state.playerOneGames == config.gamesPerSet &&
         state.playerTwoGames == config.gamesPerSet) {
       state.isTiebreak = true;
+      _tiebreakFirstServerIndex = state.serverIndex;
     }
   }
 
@@ -230,10 +232,23 @@ class ScoringController extends ChangeNotifier {
     } else {
       state.playerTwoTiebreakPoints += 1;
     }
-    final p1 = state.playerOneTiebreakPoints;
-    final p2 = state.playerTwoTiebreakPoints;
+    final int p1 = state.playerOneTiebreakPoints;
+    final int p2 = state.playerTwoTiebreakPoints;
+    final int total = p1 + p2;
+
     if ((p1 >= 7 || p2 >= 7) && (p1 - p2).abs() >= 2) {
       _awardSet(winnerIsP1: p1 > p2);
+      final int firstServer = _tiebreakFirstServerIndex ?? state.serverIndex;
+      state.serverIndex = firstServer == 0 ? 1 : 0;
+      _tiebreakFirstServerIndex = null;
+      notifyListeners();
+      return;
+    }
+
+    // While in tiebreak, serving alternates after the first point and then
+    // every two points: toggle after odd totals (1,3,5,...)
+    if (total % 2 == 1) {
+      state.serverIndex = state.serverIndex == 0 ? 1 : 0;
     }
     notifyListeners();
   }
